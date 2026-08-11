@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Electromagnet Flasher Simulator v34</title>
+<style>
+:root{
+  --wire:#475569; --live:#f59e0b; --mag:#2563eb;
+  --good:#16a34a; --danger:#dc2626; --purple:#7c3aed;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:linear-gradient(180deg,#eef4fb,#f8fafc);color:#1f2937
+}
+.app{max-width:1220px;margin:auto;padding:18px}
+h1{margin:0;font-size:clamp(24px,3vw,38px)}
+.subtitle{margin:5px 0 14px;color:#64748b}
+.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr);gap:16px;align-items:start}
+.card{background:#fff;border:1px solid #dbe4ef;border-radius:18px;box-shadow:0 10px 30px rgba(15,23,42,.08)}
+.sim-card{padding:14px}.side{padding:16px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+button{border:0;border-radius:12px;padding:11px 16px;font-weight:750;cursor:pointer;background:#e2e8f0;color:#0f172a;font-size:15px}
+button.primary{background:#0f172a;color:#fff}
+button.active{background:#16a34a;color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+.speed{display:flex;align-items:center;gap:8px;margin-left:auto;color:#64748b;font-size:14px}
+input[type=range]{width:130px}
+.stage-wrap{overflow:hidden;border-radius:14px;background:#fbfdff;border:1px solid #e6edf5}
+svg{display:block;width:100%;height:auto;min-height:520px}
+.wire{fill:none;stroke:var(--wire);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.wire.live{stroke:var(--live);filter:drop-shadow(0 0 4px rgba(245,158,11,.4))}
+.label{font-size:22px;font-weight:800;fill:#172033}
+.small{font-size:15px;font-weight:650;fill:#475569}
+.contact{fill:#fff7ed;stroke:#f59e0b;stroke-width:3}
+.contact.on{fill:#f59e0b;filter:drop-shadow(0 0 4px rgba(245,158,11,.45))}
+.bulb-shell{fill:#f8fafc;stroke:#475569;stroke-width:4}
+.bulb-filament{stroke:#64748b;stroke-width:4;fill:none}
+@keyframes bulbSeriesGlow{
+  0%{filter:drop-shadow(0 0 7px rgba(245,158,11,.45))}
+  100%{filter:drop-shadow(0 0 11px rgba(245,158,11,.68))}
+}
+@keyframes bulbSingleGlow{
+  0%{filter:drop-shadow(0 0 12px rgba(245,158,11,.78))}
+  100%{filter:drop-shadow(0 0 22px rgba(245,158,11,1))}
+}
+@keyframes raysPulseSeries{
+  0%{opacity:.18}
+  100%{opacity:.48}
+}
+@keyframes raysPulseSingle{
+  0%{opacity:.35}
+  50%{opacity:1}
+  100%{opacity:.55}
+}
+.bulb.on .bulb-shell{fill:#fde68a;stroke:#f59e0b}
+.bulb.on .bulb-filament{stroke:#b45309}
+.bulb-rays{opacity:0;stroke:#f59e0b;stroke-linecap:round}
+.bulb-rays line{stroke-width:4}
+.bulb.series .bulb-shell{animation:bulbSeriesGlow .75s ease-in-out infinite alternate; opacity:.82}
+.bulb.series .bulb-rays{animation:raysPulseSeries .75s ease-in-out infinite alternate; opacity:.35}
+.bulb.single .bulb-shell{animation:bulbSingleGlow .38s ease-in-out infinite alternate; opacity:1}
+.bulb.single .bulb-rays{animation:raysPulseSingle .32s ease-in-out infinite alternate; opacity:1}
+.bulb.single .bulb-rays line{stroke-width:6}
+.coil-wire{fill:none;stroke:#475569;stroke-width:5;stroke-linecap:round}
+.coil.on .coil-wire{stroke:#2563eb;filter:drop-shadow(0 0 4px rgba(37,99,235,.65))}
+.core{fill:#d1d5db;stroke:#475569;stroke-width:3}
+.core.on{fill:#93c5fd;stroke:#2563eb}
+.mag-field{fill:none;stroke:#60a5fa;stroke-width:3;stroke-dasharray:8 8;opacity:0}
+.mag-field.on{opacity:1;animation:pulse .65s ease-in-out infinite alternate}
+@keyframes pulse{to{stroke-width:5;opacity:.55}}
+.ironbar{fill:#9ca3af;stroke:#475569;stroke-width:3}
+.bar-moving{filter:drop-shadow(0 5px 5px rgba(15,23,42,.25))}
+.state-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.state-box{border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;padding:9px;text-align:center}
+.state-box b{display:block;font-size:13px;color:#475569}
+.state-box span{display:block;font-size:16px;font-weight:850;margin-top:2px}
+.yes{color:#16a34a}.no{color:#dc2626}
+.phase{padding:13px 14px;border-radius:14px;background:#eff6ff;border:1px solid #bfdbfe;margin-bottom:12px}
+.phase b{display:block;font-size:13px;color:#1d4ed8;text-transform:uppercase;letter-spacing:.05em}
+.phase span{display:block;font-size:19px;font-weight:850;margin-top:2px}
+.step-card{display:flex;gap:12px;padding:12px;border:1px solid #e2e8f0;border-radius:14px;margin:10px 0;background:#fff}
+.step-card.current{border-color:#7c3aed;background:#f5f3ff}
+.step-number{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#e2e8f0;font-size:20px;font-weight:900;flex:0 0 auto}
+.step-card.current .step-number{background:#7c3aed;color:#fff}
+.step-card p{margin:0;line-height:1.42}
+.note{margin-top:12px;padding:11px 12px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:13px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.state-strip{grid-template-columns:repeat(2,1fr)}.speed{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Electromagnet Flasher Simulator</h1>
+  
+
+  <div class="grid">
+    <section class="card sim-card">
+      <div class="toolbar">
+        <button id="switchBtn" class="primary">Close switch S</button>
+        <button id="prevBtn" disabled>← Previous Stage</button>
+        <button id="nextBtn" disabled>Next Stage →</button>
+        <button id="autoBtn" disabled>Auto Animate ▶</button>
+        <button id="resetBtn">Reset</button>
+        <div class="speed">
+          <label for="speedRange">Animation speed</label>
+          <input id="speedRange" type="range" min="0.55" max="2.1" step="0.05" value="1">
+          <span id="speedLabel">1.0×</span>
+        </div>
+      </div>
+
+      <div class="stage-wrap">
+      <svg viewBox="0 0 960 560" role="img" aria-label="Electromagnet circuit with moving L-shaped iron bar">
+        <!-- TOP CIRCUIT -->
+        <path id="topP" class="wire" d="M290 95 H480"/>
+        <!-- joined line between P and Q -->
+        <path id="betweenPQ" class="wire" d="M540 95 H600"/>
+        <path id="qToBattery" class="wire" d="M660 95 H830 V220"/>
+
+        <!-- BATTERY -->
+        <line x1="800" y1="220" x2="860" y2="220" stroke="#334155" stroke-width="5"/>
+        <line x1="812" y1="250" x2="848" y2="250" stroke="#334155" stroke-width="5"/>
+        <path id="batteryToSwitch" class="wire" d="M830 250 V320"/>
+        <text class="small" x="872" y="238">battery</text>
+
+        <!-- SWITCH -->
+        <circle cx="830" cy="320" r="7" fill="#334155"/>
+        <circle cx="830" cy="365" r="7" fill="#334155"/>
+        <line id="switchBlade" x1="830" y1="320" x2="867" y2="349" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
+        <path id="switchToBottom" class="wire" d="M830 365 V448 H390"/>
+        <text class="label" x="864" y="343">S</text>
+
+        <!-- BULBS -->
+        <text class="label" x="510" y="48" text-anchor="middle">P</text>
+        <g id="bulbP" class="bulb">
+          <g class="bulb-rays">
+            <line x1="510" y1="48" x2="510" y2="26"/>
+            <line x1="543" y1="62" x2="560" y2="45"/>
+            <line x1="557" y1="95" x2="579" y2="95"/>
+            <line x1="543" y1="128" x2="560" y2="145"/>
+            <line x1="510" y1="142" x2="510" y2="164"/>
+            <line x1="477" y1="128" x2="460" y2="145"/>
+            <line x1="463" y1="95" x2="441" y2="95"/>
+            <line x1="477" y1="62" x2="460" y2="45"/>
+          </g>
+          <circle class="bulb-shell" cx="510" cy="95" r="30"/>
+          <path class="bulb-filament" d="M493 82 L527 108 M527 82 L493 108"/>
+        </g>
+        <text class="label" x="630" y="48" text-anchor="middle">Q</text>
+        <g id="bulbQ" class="bulb">
+          <g class="bulb-rays">
+            <line x1="630" y1="46" x2="630" y2="20"/>
+            <line x1="665" y1="60" x2="684" y2="41"/>
+            <line x1="679" y1="95" x2="705" y2="95"/>
+            <line x1="665" y1="130" x2="684" y2="149"/>
+            <line x1="630" y1="144" x2="630" y2="170"/>
+            <line x1="595" y1="130" x2="576" y2="149"/>
+            <line x1="581" y1="95" x2="555" y2="95"/>
+            <line x1="595" y1="60" x2="576" y2="41"/>
+          </g>
+          <circle class="bulb-shell" cx="630" cy="95" r="30"/>
+          <path class="bulb-filament" d="M613 82 L647 108 M647 82 L613 108"/>
+        </g>
+
+        <!-- ELECTROMAGNET shifted left -->
+        <g id="coil" class="coil">
+          <rect id="core" class="core" x="260" y="120" width="60" height="148" rx="8"/>
+          <path class="coil-wire" d="M250 128
+            C335 140,335 155,250 168
+            C335 181,335 196,250 208
+            C335 221,335 236,250 248
+            C315 257,325 264,290 268"/>
+        </g>
+        <path id="coilTop" class="wire" d="M290 95 V120"/>
+        <path id="leftUpper" class="wire" d="M135 270 H290"/>
+
+        <text class="small" x="4" y="150">fixed iron cylinder</text>
+        <line x1="168" y1="148" x2="260" y2="168" stroke="#94a3b8" stroke-width="2"/>
+
+        <path id="field1" class="mag-field" d="M236 140 C180 144,174 248,236 256"/>
+        <path id="field2" class="mag-field" d="M344 140 C400 144,406 248,344 256"/>
+
+        <!-- LEFT / BOTTOM RETURN -->
+        <path id="leftVertical" class="wire" d="M135 270 V448"/>
+        <path id="bottomLeft" class="wire" d="M135 448 H230"/>
+        <!-- intentional gap between bottom contacts -->
+        <path id="bottomRight" class="wire" d="M300 448 H390"/>
+
+        <!-- RIGHT CONTACT BRANCH -->
+        <path id="branchUpper" class="wire" d="M585 95 V332 H317"/>
+        <path id="branchLower" class="wire" d="M317 374 V448"/>
+
+        <!-- right contacts -->
+        <rect id="rightContactUpper" class="contact" x="310" y="325" width="14" height="14" rx="3"/>
+        <rect id="rightContactLower" class="contact" x="310" y="360" width="14" height="14" rx="3"/>
+        <text class="small" x="332" y="346">metal contact</text>
+
+        <!-- bottom contacts with visible gap -->
+        <rect id="bottomContactL" class="contact" x="230" y="434" width="14" height="14" rx="3"/>
+        <rect id="bottomContactR" class="contact" x="286" y="434" width="14" height="14" rx="3"/>
+        <text class="small" x="265" y="486" text-anchor="middle">metal contact</text>
+
+        <!-- A and B -->
+        <text class="label" x="170" y="470">A</text>
+        <text class="label" x="150" y="252">B</text>
+
+        <!-- ONE-PIECE L-SHAPED IRON BAR -->
+        <g id="barGroup">
+          <path id="barOnePiece" class="ironbar" d="
+            M188 330
+            H210
+            V406
+            H296
+            V368
+            H314
+            V438
+            H188
+            Z"/>
+        </g>
+
+        <text class="small" x="2" y="438">iron bar</text>
+        <line x1="95" y1="432" x2="192" y2="360" stroke="#94a3b8" stroke-width="2"/>
+
+        <!-- movement arrow -->
+        <g id="moveArrow" opacity="0">
+          <line x1="252" y1="406" x2="252" y2="338" stroke="#7c3aed" stroke-width="6" stroke-linecap="round"/>
+          <polygon points="252,324 240,346 264,346" fill="#7c3aed"/>
+          <text class="small" x="270" y="350">moves vertically to B</text>
+        </g>
+      </svg>
+      </div>
+
+      <div class="state-strip">
+        <div class="state-box"><b>Bulb P</b><span id="stateP" class="no">OFF</span></div>
+        <div class="state-box"><b>Bulb Q</b><span id="stateQ" class="no">OFF</span></div>
+        <div class="state-box"><b>Electromagnet</b><span id="stateMag" class="no">DEMAGNETISED</span></div>
+        <div class="state-box"><b>Iron bar</b><span id="stateBar">At A</span></div>
+        <div class="state-box"><b>Right contacts</b><span id="stateRight" class="no">OPEN</span></div>
+      </div>
+    </section>
+
+    <aside class="card side">
+      <div class="phase">
+        <b>Current phase</b>
+        <span id="phaseText">Switch is open</span>
+      </div>
+
+      <div id="step1" class="step-card">
+        <div class="step-number">1</div>
+        <p><b>When the switch is closed</b>, the L shaped bar touches the bottom metal contacts and <b>electric current flows through the closed circuit.</b> <b>P and Q light up.</b></p>
+      </div>
+
+      <div id="step2" class="step-card">
+        <div class="step-number">2</div>
+        <p>The <b>fixed iron bar</b> becomes an electromagnet/ <b>gets magnetised</b>.</p>
+      </div>
+
+      <div id="step3" class="step-card">
+        <div class="step-number">3</div>
+        <p>The <b>electromagnet attracts the iron bar</b> and the L shaped bar <b>moved vertically up</b> to <b>B</b>. Electric current stops flowing through the outer loop.</p>
+      </div>
+
+      <div id="step4" class="step-card">
+        <div class="step-number">4</div>
+        <p>At <b>B</b>, the right side of the iron bar touches the <b>two right metal contacts</b>. The <b>electromagnet demagnetised</b> and <b>electric current only flows through Q</b> in a closed circuit. <b>Q lights up and not P.</b></p>
+      </div>
+
+      <div id="step5" class="step-card">
+        <div class="step-number">5</div>
+        <p>The fixed iron bar <b>drops back</b> to <b>A</b> and touches the bottom metal contacts again. The <b>cycle repeats</b> and the iron bar moved up and down.</p>
+      </div>
+
+      <div class="note">Use <b>Previous Stage</b> and <b>Next Stage</b> for manual control, or press <b>Auto Animate</b> to run the stages automatically. While auto animation is running, press <b>Pause Auto</b> to stop at the current stage and <b>Resume Auto</b> to continue.</div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  const switchBtn = $('switchBtn');
+  const prevBtn = $('prevBtn');
+  const nextBtn = $('nextBtn');
+  const autoBtn = $('autoBtn');
+  const resetBtn = $('resetBtn');
+  const speedRange = $('speedRange');
+  const speedLabel = $('speedLabel');
+
+  const bulbP = $('bulbP');
+  const bulbQ = $('bulbQ');
+  const coil = $('coil');
+  const core = $('core');
+  const field1 = $('field1');
+  const field2 = $('field2');
+  const barGroup = $('barGroup');
+  const moveArrow = $('moveArrow');
+  const switchBlade = $('switchBlade');
+
+  const stateP = $('stateP');
+  const stateQ = $('stateQ');
+  const stateMag = $('stateMag');
+  const stateBar = $('stateBar');
+  const stateRight = $('stateRight');
+  const phaseText = $('phaseText');
+  const stepEls = [1,2,3,4,5].map(n => $('step' + n));
+
+  const pPath = [$('topP'), $('coilTop'), $('leftUpper'), $('leftVertical'), $('bottomLeft')];
+  const bottomReturn = [$('bottomRight')];
+  const qPath = [$('qToBattery'), $('batteryToSwitch'), $('switchToBottom'), $('betweenPQ')];
+  const rightBranch = [$('branchUpper'), $('branchLower')];
+  const bottomContacts = [$('bottomContactL'), $('bottomContactR')];
+  const rightContacts = [$('rightContactUpper'), $('rightContactLower')];
+
+  let switchClosed = false;
+  let stage = 0;
+  let speed = 1;
+  let transitionTimer = null;
+
+  let autoRunning = false;
+  let autoPaused = false;
+  let autoTimer = null;
+
+  function clearTransitionTimer() {
+    if (transitionTimer) {
+      clearTimeout(transitionTimer);
+      transitionTimer = null;
+    }
+  }
+
+  function clearAutoTimer() {
+    if (autoTimer) {
+      clearTimeout(autoTimer);
+      autoTimer = null;
+    }
+  }
+
+  function setText(el, text, on) {
+    el.textContent = text;
+    el.classList.remove('yes','no');
+    if (on === true) el.classList.add('yes');
+    if (on === false) el.classList.add('no');
+  }
+
+  function setStep(n, text) {
+    stepEls.forEach(el => el.classList.remove('current'));
+    if (n >= 1 && n <= 5) stepEls[n-1].classList.add('current');
+    phaseText.textContent = text;
+  }
+
+  function wireOn(arr, on) {
+    arr.forEach(el => el.classList.toggle('live', on));
+  }
+
+  function contactOn(arr, on) {
+    arr.forEach(el => el.classList.toggle('on', on));
+  }
+
+  function lamps(pOn, qOn) {
+    bulbP.classList.remove('on','series','single');
+    bulbQ.classList.remove('on','series','single');
+
+    if (pOn) bulbP.classList.add('on');
+    if (qOn) bulbQ.classList.add('on');
+
+    if (pOn && qOn) {
+      bulbP.classList.add('series');
+      bulbQ.classList.add('series');
+    } else if (qOn && !pOn) {
+      bulbQ.classList.add('single');
+    } else if (pOn && !qOn) {
+      bulbP.classList.add('single');
+    }
+
+    setText(stateP, pOn ? 'ON' : 'OFF', pOn);
+    setText(stateQ, qOn ? 'ON' : 'OFF', qOn);
+  }
+
+  function magnet(on) {
+    coil.classList.toggle('on', on);
+    core.classList.toggle('on', on);
+    field1.classList.toggle('on', on);
+    field2.classList.toggle('on', on);
+    setText(stateMag, on ? 'MAGNETISED' : 'DEMAGNETISED', on);
+  }
+
+  function clearElectricalState() {
+    lamps(false, false);
+    magnet(false);
+    wireOn(pPath, false);
+    wireOn(bottomReturn, false);
+    wireOn(qPath, false);
+    wireOn(rightBranch, false);
+    contactOn(bottomContacts, false);
+    contactOn(rightContacts, false);
+    setText(stateRight, 'OPEN', false);
+  }
+
+  function setBar(position, animate=true) {
+    const duration = Math.max(.22, .55 / speed);
+    barGroup.style.transition = animate
+      ? `transform ${duration}s cubic-bezier(.2,.75,.3,1)`
+      : 'none';
+
+    if (position === 'B') {
+      barGroup.setAttribute('transform', 'translate(0 -43)');
+      barGroup.classList.add('bar-moving');
+      setText(stateBar, 'At B', true);
+    } else if (position === 'mid') {
+      barGroup.setAttribute('transform', 'translate(0 -22)');
+      barGroup.classList.add('bar-moving');
+      setText(stateBar, 'Moving to B');
+    } else {
+      barGroup.setAttribute('transform', 'translate(0 0)');
+      barGroup.classList.remove('bar-moving');
+      setText(stateBar, 'At A', true);
+    }
+  }
+
+  function closeSwitchGraphic() {
+    switchBlade.setAttribute('x2','830');
+    switchBlade.setAttribute('y2','365');
+    switchBtn.textContent = 'Open switch S';
+    switchBtn.classList.add('active');
+  }
+
+  function openSwitchGraphic() {
+    switchBlade.setAttribute('x2','867');
+    switchBlade.setAttribute('y2','349');
+    switchBtn.textContent = 'Close switch S';
+    switchBtn.classList.remove('active');
+  }
+
+  function updateNavButtons() {
+    const enabled = switchClosed;
+    const autoActivelyRunning = autoRunning && !autoPaused;
+
+    prevBtn.disabled = !enabled || stage <= 1 || autoActivelyRunning;
+    nextBtn.disabled = !enabled || autoActivelyRunning;
+    autoBtn.disabled = !enabled;
+
+    prevBtn.textContent = '← Previous Stage';
+    nextBtn.textContent = stage >= 5 ? 'Repeat Cycle →' : 'Next Stage →';
+
+    if (!autoRunning) {
+      autoBtn.textContent = 'Auto Animate ▶';
+      autoBtn.classList.remove('active');
+    } else if (autoPaused) {
+      autoBtn.textContent = 'Resume Auto ▶';
+      autoBtn.classList.remove('active');
+    } else {
+      autoBtn.textContent = 'Pause Auto ⏸';
+      autoBtn.classList.add('active');
+    }
+  }
+
+  function scheduleAutoAdvance() {
+    clearAutoTimer();
+    if (!switchClosed || !autoRunning || autoPaused) return;
+
+    // Allow enough time for each stage to be read and for stages 3 and 5
+    // to finish their internal movement before advancing.
+    const delay = Math.max(1100, 2600 / speed);
+
+    autoTimer = setTimeout(() => {
+      if (!switchClosed || !autoRunning || autoPaused) return;
+      const nextStage = stage >= 5 ? 1 : stage + 1;
+      goToStage(nextStage, true);
+      scheduleAutoAdvance();
+    }, delay);
+  }
+
+  function startAuto() {
+    if (!switchClosed) return;
+    autoRunning = true;
+    autoPaused = false;
+    updateNavButtons();
+    scheduleAutoAdvance();
+  }
+
+  function pauseAuto() {
+    if (!autoRunning || autoPaused) return;
+    autoPaused = true;
+    clearAutoTimer();
+
+    // Pause any stage-specific delayed transition too.
+    // The current visual state is left in place for discussion.
+    clearTransitionTimer();
+    updateNavButtons();
+  }
+
+  function resumeAuto() {
+    if (!autoRunning || !autoPaused || !switchClosed) return;
+    autoPaused = false;
+
+    // Re-run the current stage so a paused Stage 3 or 5 transition
+    // resumes cleanly from that stage.
+    goToStage(stage || 1, true);
+    updateNavButtons();
+    scheduleAutoAdvance();
+  }
+
+  function stopAuto() {
+    autoRunning = false;
+    autoPaused = false;
+    clearAutoTimer();
+    updateNavButtons();
+  }
+
+  function stage1(fromAuto=false) {
+    clearTransitionTimer();
+    stage = 1;
+    setBar('A');
+    moveArrow.setAttribute('opacity','0');
+    clearElectricalState();
+
+    contactOn(bottomContacts, true);
+    wireOn(pPath, true);
+    wireOn(bottomReturn, true);
+    wireOn(qPath, true);
+    lamps(true, true);
+    magnet(false);
+
+    setText(stateRight, 'OPEN', false);
+    setStep(1, 'Stage 1 — P and Q light up');
+    updateNavButtons();
+  }
+
+  function stage2(fromAuto=false) {
+    clearTransitionTimer();
+    stage = 2;
+    setBar('A');
+    moveArrow.setAttribute('opacity','0');
+    clearElectricalState();
+
+    contactOn(bottomContacts, true);
+    wireOn(pPath, true);
+    wireOn(bottomReturn, true);
+    wireOn(qPath, true);
+    lamps(true, true);
+    magnet(true);
+
+    setText(stateRight, 'OPEN', false);
+    setStep(2, 'Stage 2 — Electromagnet is magnetised');
+    updateNavButtons();
+  }
+
+  function stage3(fromAuto=false) {
+    clearTransitionTimer();
+    stage = 3;
+    setStep(3, 'Stage 3 — Transition to Q only');
+    updateNavButtons();
+
+    // Start from the magnetised state at A.
+    clearElectricalState();
+    contactOn(bottomContacts, true);
+    wireOn(pPath, true);
+    wireOn(bottomReturn, true);
+    wireOn(qPath, true);
+    lamps(true, true);
+    magnet(true);
+    setText(stateRight, 'OPEN', false);
+
+    moveArrow.setAttribute('opacity','1');
+    setBar('mid');
+
+    // While the Stage 3 words are displayed, complete the transition:
+    // the outer loop stops and only the Q path remains live.
+    transitionTimer = setTimeout(() => {
+      if (stage !== 3 || (autoRunning && autoPaused)) return;
+
+      setBar('B');
+      moveArrow.setAttribute('opacity','0');
+
+      clearElectricalState();
+      contactOn(rightContacts, true);
+      wireOn(rightBranch, true);
+      wireOn(bottomReturn, true);
+      wireOn(qPath, true);
+      lamps(false, true);
+      magnet(false);
+
+      setText(stateRight, 'CLOSED', true);
+      setText(stateBar, 'At B', true);
+    }, Math.max(280, 560 / speed));
+  }
+
+  function stage4(fromAuto=false) {
+    clearTransitionTimer();
+    stage = 4;
+    setBar('B');
+    moveArrow.setAttribute('opacity','0');
+    clearElectricalState();
+
+    contactOn(rightContacts, true);
+    wireOn(rightBranch, true);
+    wireOn(bottomReturn, true);
+    wireOn(qPath, true);
+
+    lamps(false, true);
+    magnet(false);
+    setText(stateRight, 'CLOSED', true);
+    setStep(4, 'Stage 4 — Only Q lights up');
+    updateNavButtons();
+  }
+
+  function stage5(fromAuto=false) {
+    clearTransitionTimer();
+    stage = 5;
+    moveArrow.setAttribute('opacity','0');
+
+    clearElectricalState();
+    contactOn(rightContacts, false);
+    setText(stateRight, 'OPEN', false);
+    setText(stateBar, 'Dropping to A');
+    setStep(5, 'Stage 5 — Bar drops back to A');
+    updateNavButtons();
+
+    setBar('A');
+
+    transitionTimer = setTimeout(() => {
+      if (stage !== 5 || (autoRunning && autoPaused)) return;
+
+      contactOn(bottomContacts, true);
+      wireOn(pPath, true);
+      wireOn(bottomReturn, true);
+      wireOn(qPath, true);
+      lamps(true, true);
+      magnet(false);
+      setText(stateRight, 'OPEN', false);
+      setText(stateBar, 'At A', true);
+      updateNavButtons();
+    }, Math.max(260, 580 / speed));
+  }
+
+  function goToStage(n, fromAuto=false) {
+    if (!switchClosed) return;
+
+    if (!fromAuto && autoRunning && !autoPaused) {
+      // Manual stage buttons are disabled during active auto mode,
+      // but this is kept as a safety guard.
+      return;
+    }
+
+    if (n === 1) stage1(fromAuto);
+    if (n === 2) stage2(fromAuto);
+    if (n === 3) stage3(fromAuto);
+    if (n === 4) stage4(fromAuto);
+    if (n === 5) stage5(fromAuto);
+  }
+
+  function openCircuit() {
+    clearTransitionTimer();
+    clearAutoTimer();
+    autoRunning = false;
+    autoPaused = false;
+
+    switchClosed = false;
+    stage = 0;
+    openSwitchGraphic();
+    clearElectricalState();
+    setBar('A', false);
+    moveArrow.setAttribute('opacity','0');
+    setText(stateBar, 'At A');
+    setStep(0, 'Switch is open');
+    updateNavButtons();
+  }
+
+  function closeCircuit() {
+    clearTransitionTimer();
+    switchClosed = true;
+    closeSwitchGraphic();
+    goToStage(1, true);
+    updateNavButtons();
+  }
+
+  switchBtn.addEventListener('click', () => {
+    switchClosed ? openCircuit() : closeCircuit();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (!switchClosed) return;
+    const nextStage = stage >= 5 ? 1 : stage + 1;
+    goToStage(nextStage);
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (!switchClosed) return;
+    const prevStage = stage <= 1 ? 1 : stage - 1;
+    goToStage(prevStage);
+  });
+
+  autoBtn.addEventListener('click', () => {
+    if (!switchClosed) return;
+
+    if (!autoRunning) {
+      startAuto();
+    } else if (!autoPaused) {
+      pauseAuto();
+    } else {
+      resumeAuto();
+    }
+  });
+
+  resetBtn.addEventListener('click', openCircuit);
+
+  speedRange.addEventListener('input', () => {
+    speed = parseFloat(speedRange.value);
+    speedLabel.textContent = speed.toFixed(1) + '×';
+
+    if (autoRunning && !autoPaused) {
+      scheduleAutoAdvance();
+    }
+  });
+
+  openCircuit();
+})();
+</script>
+</body>
+</html>
