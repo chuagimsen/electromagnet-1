@@ -87,6 +87,28 @@ svg{display:block;width:100%;height:auto;min-height:520px}
 .step-card p{margin:0;line-height:1.42}
 .note{margin-top:12px;padding:11px 12px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:13px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.state-strip{grid-template-columns:repeat(2,1fr)}.speed{margin-left:0}}
+
+.instructions{
+  margin:0 0 12px 0;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#f8fafc;
+  border:1px solid #cbd5e1;
+  color:#334155;
+  line-height:1.45;
+}
+.instructions>b{
+  display:block;
+  font-size:15px;
+  color:#0f172a;
+  margin-bottom:4px;
+}
+.instructions span{
+  display:block;
+  font-size:13.5px;
+  margin-top:2px;
+}
+
 </style>
 </head>
 <body>
@@ -96,6 +118,14 @@ svg{display:block;width:100%;height:auto;min-height:520px}
 
   <div class="grid">
     <section class="card sim-card">
+
+      <div class="instructions">
+        <b>How to use this simulator</b>
+        <span>1. Click <b>Close switch S</b> to start the animation.</span>
+        <span>2. Watch the circuit and <b>read the explanation on the right</b> as each stage is shown.</span>
+        <span>3. You can use <b>Previous Stage</b> and <b>Next Stage</b> to move through the stages manually, or click <b>Auto Animate</b> to let the circuit run automatically.</span>
+      </div>
+
       <div class="toolbar">
         <button id="switchBtn" class="primary">Close switch S</button>
         <button id="prevBtn" disabled>← Previous Stage</button>
