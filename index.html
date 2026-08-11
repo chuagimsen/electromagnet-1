@@ -142,7 +142,7 @@ svg{display:block;width:100%;height:auto;min-height:520px}
       <div class="stage-wrap">
       <svg viewBox="0 0 960 560" role="img" aria-label="Electromagnet circuit with moving L-shaped iron bar">
         <!-- TOP CIRCUIT -->
-        <path id="topP" class="wire" d="M290 95 H480"/>
+        <path id="topP" class="wire" d="M220 95 H480"/>
         <!-- joined line between P and Q -->
         <path id="betweenPQ" class="wire" d="M540 95 H600"/>
         <path id="qToBattery" class="wire" d="M660 95 H830 V220"/>
@@ -194,21 +194,21 @@ svg{display:block;width:100%;height:auto;min-height:520px}
 
         <!-- ELECTROMAGNET shifted left -->
         <g id="coil" class="coil">
-          <rect id="core" class="core" x="260" y="120" width="60" height="148" rx="8"/>
-          <path class="coil-wire" d="M250 128
-            C335 140,335 155,250 168
-            C335 181,335 196,250 208
-            C335 221,335 236,250 248
-            C315 257,325 264,290 268"/>
+          <rect id="core" class="core" x="190" y="120" width="60" height="148" rx="8"/>
+          <path class="coil-wire" d="M180 128
+            C265 140,265 155,180 168
+            C265 181,265 196,180 208
+            C265 221,265 236,180 248
+            C245 257,255 264,220 268"/>
         </g>
-        <path id="coilTop" class="wire" d="M290 95 V120"/>
-        <path id="leftUpper" class="wire" d="M135 270 H290"/>
+        <path id="coilTop" class="wire" d="M220 95 V120"/>
+        <path id="leftUpper" class="wire" d="M135 270 H220"/>
 
         <text class="small" x="4" y="150">fixed iron cylinder</text>
-        <line x1="168" y1="148" x2="260" y2="168" stroke="#94a3b8" stroke-width="2"/>
+        <line x1="168" y1="148" x2="190" y2="168" stroke="#94a3b8" stroke-width="2"/>
 
-        <path id="field1" class="mag-field" d="M236 140 C180 144,174 248,236 256"/>
-        <path id="field2" class="mag-field" d="M344 140 C400 144,406 248,344 256"/>
+        <path id="field1" class="mag-field" d="M166 140 C110 144,104 248,166 256"/>
+        <path id="field2" class="mag-field" d="M274 140 C330 144,336 248,274 256"/>
 
         <!-- LEFT / BOTTOM RETURN -->
         <path id="leftVertical" class="wire" d="M135 270 V448"/>
@@ -433,11 +433,11 @@ svg{display:block;width:100%;height:auto;min-height:520px}
       : 'none';
 
     if (position === 'B') {
-      barGroup.setAttribute('transform', 'translate(0 -43)');
+      barGroup.setAttribute('transform', 'translate(0 -58)');
       barGroup.classList.add('bar-moving');
       setText(stateBar, 'At B', true);
     } else if (position === 'mid') {
-      barGroup.setAttribute('transform', 'translate(0 -22)');
+      barGroup.setAttribute('transform', 'translate(0 -30)');
       barGroup.classList.add('bar-moving');
       setText(stateBar, 'Moving to B');
     } else {
