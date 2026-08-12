@@ -295,7 +295,7 @@ svg{display:block;width:100%;height:auto;min-height:520px}
           <circle cx="820" cy="350" r="7" fill="#334155"/>
           <line id="switchBlade" x1="820" y1="305" x2="857" y2="334" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
           <path id="switchToBottom" class="wire" d="M820 350 V455 H390"/>
-          <text class="label" x="855" y="329">S</text>
+          <text class="small" x="855" y="329">switch</text>
 
           <!-- ELECTROMAGNET -->
           <g id="coil" class="coil">
@@ -308,8 +308,8 @@ svg{display:block;width:100%;height:auto;min-height:520px}
           </g>
 
           <!-- coil lower connection routed above B position -->
-          <path id="coilBottom" class="wire" d="M225 260 V275 H130"/>
-          <path id="leftVertical" class="wire" d="M130 275 V455"/>
+          <path id="coilBottom" class="wire" d="M225 260 H130"/>
+          <path id="leftVertical" class="wire" d="M130 260 V455"/>
           <path id="bottomLeft" class="wire" d="M130 455 H210"/>
 
           <text class="small" x="8" y="145">fixed iron cylinder</text>
@@ -351,8 +351,10 @@ svg{display:block;width:100%;height:auto;min-height:520px}
               Z"/>
           </g>
 
-          <text class="small" x="18" y="430">iron bar</text>
-          <line x1="98" y1="424" x2="207" y2="390" stroke="#94a3b8" stroke-width="2"/>
+          <g id="barLabelGroup">
+            <text class="small" x="18" y="430">iron bar</text>
+            <line x1="98" y1="424" x2="207" y2="390" stroke="#94a3b8" stroke-width="2"/>
+          </g>
 
           <!-- movement arrow -->
           <g id="moveArrow" opacity="0">
@@ -429,6 +431,7 @@ svg{display:block;width:100%;height:auto;min-height:520px}
   const field1 = $('field1');
   const field2 = $('field2');
   const barGroup = $('barGroup');
+  const barLabelGroup = $('barLabelGroup');
   const moveArrow = $('moveArrow');
   const switchBlade = $('switchBlade');
 
@@ -516,20 +519,26 @@ svg{display:block;width:100%;height:auto;min-height:520px}
 
   function setBar(position,animate=true){
     const duration=Math.max(.22,.58/speed);
-    barGroup.style.transition=animate
+    const transitionValue = animate
       ? `transform ${duration}s cubic-bezier(.2,.75,.3,1)`
       : 'none';
 
+    barGroup.style.transition = transitionValue;
+    if(barLabelGroup) barLabelGroup.style.transition = transitionValue;
+
     if(position==='B'){
-      barGroup.setAttribute('transform','translate(0 -80)');
+      barGroup.setAttribute('transform','translate(0 -83)');
+      if(barLabelGroup) barLabelGroup.setAttribute('transform','translate(0 -83)');
       barGroup.classList.add('bar-moving');
       setText(stateBar,'At B',true);
     }else if(position==='mid'){
-      barGroup.setAttribute('transform','translate(0 -40)');
+      barGroup.setAttribute('transform','translate(0 -42)');
+      if(barLabelGroup) barLabelGroup.setAttribute('transform','translate(0 -42)');
       barGroup.classList.add('bar-moving');
       setText(stateBar,'Moving to B');
     }else{
       barGroup.setAttribute('transform','translate(0 0)');
+      if(barLabelGroup) barLabelGroup.setAttribute('transform','translate(0 0)');
       barGroup.classList.remove('bar-moving');
       setText(stateBar,'At A',true);
     }
